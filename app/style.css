@@ -1,0 +1,268 @@
+/* Design Apple / iOS HIG. Police système (SF), light + dark adaptatifs,
+   contrôles segmentés, bleu système. Zéro dépendance de police. */
+
+:root {
+  /* Light (systemGroupedBackground) */
+  --bg: #F2F2F7;
+  --surface: #FFFFFF;
+  --label: #1D1D1F;
+  --label2: rgba(60, 60, 67, 0.6);
+  --separator: rgba(60, 60, 67, 0.16);
+  --fill: rgba(120, 120, 128, 0.12);
+  --accent: #007AFF;
+  --danger: #FF3B30;
+  --seg-thumb: #FFFFFF;
+  --seg-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.04);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --radius: 16px;
+  --radius-sm: 11px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #1C1C1E;
+    --label: #FFFFFF;
+    --label2: rgba(235, 235, 245, 0.6);
+    --separator: rgba(84, 84, 88, 0.55);
+    --fill: rgba(118, 118, 128, 0.24);
+    --accent: #0A84FF;
+    --danger: #FF453A;
+    --seg-thumb: #636366;
+    --seg-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+    --card-shadow: none;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; } /* sinon display:flex écrase l'attribut hidden */
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--label);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 28px 18px 56px;
+}
+
+.title {
+  font-size: 2.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 6px 0 22px;
+}
+
+/* Contrôle segmenté (iOS) — partagé par .modes et .tabs */
+.modes, .tabs {
+  position: relative;
+  display: flex;
+  gap: 0;
+  padding: 2px;
+  margin-bottom: 22px;
+  background: var(--fill);
+  border-radius: 10px;
+}
+.modes { --n: 2; }
+.tabs { --n: 3; }
+/* Pastille blanche qui glisse derrière le segment sélectionné */
+.seg-indicator {
+  position: absolute;
+  z-index: 0;
+  top: 2px; bottom: 2px; left: 2px;
+  width: calc((100% - 4px) / var(--n));
+  background: var(--seg-thumb);
+  border-radius: 8px;
+  box-shadow: var(--seg-shadow);
+  transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform .34s cubic-bezier(.34, 1.12, .5, 1); /* slide légèrement ressort, façon iOS */
+}
+.mode, .tab {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--label2);
+  font: inherit;
+  font-size: 0.94rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color .2s ease, transform .12s ease;
+}
+.mode:active, .tab:active { transform: scale(.96); } /* press-scale */
+.tab svg {
+  width: 16px; height: 16px;
+  fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.mode[aria-selected="true"], .tab[aria-selected="true"] { color: var(--label); font-weight: 600; }
+.mode:focus-visible, .tab:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Mode Expression (Numi) */
+.numi {
+  display: grid;
+  grid-template-columns: 1fr minmax(120px, .5fr);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+#nm-input, #nm-out {
+  margin: 0;
+  padding: 20px;
+  /* même famille/line-height des deux côtés => résultats alignés ligne à ligne */
+  font-family: inherit;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  font-variant-numeric: tabular-nums;
+  min-height: 220px;
+  box-sizing: border-box;
+}
+#nm-input {
+  width: 100%;
+  border: 0;
+  resize: vertical;
+  background: transparent;
+  color: var(--label);
+  outline: none;
+}
+#nm-out {
+  border-left: 1px solid var(--separator);
+  color: var(--accent);
+  font-weight: 600;
+  white-space: pre;
+  overflow: auto;
+}
+.note { color: var(--label2); font-size: .85rem; margin: 12px 4px 0; }
+.note code {
+  background: var(--fill);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: .9em;
+}
+
+/* Cartes & champs */
+.card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 20px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1 1 170px;
+  min-width: 0;
+  font-size: .8rem;
+  font-weight: 500;
+  color: var(--label2);
+}
+input, select {
+  width: 100%;
+  font: inherit;
+  font-size: 1.02rem;
+  color: var(--label);
+  background: var(--fill);
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 11px 13px;
+  min-height: 44px;
+}
+input:focus, select:focus { outline: 3px solid var(--accent); outline-offset: 1px; }
+
+/* Saisie de durée (j/h/min/s) */
+.duration {
+  flex: 1 1 100%;
+  display: flex;
+  gap: 10px;
+  border: 0;
+  background: var(--fill);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px 16px;
+  margin: 0;
+}
+.duration legend { color: var(--label2); font-size: .8rem; font-weight: 500; padding: 0 4px; }
+.duration label {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: .78rem;
+  color: var(--label2);
+  text-align: center;
+}
+.duration input { background: var(--surface); text-align: center; padding: 9px 4px; }
+
+/* Résultats */
+.result {
+  display: block;
+  margin-top: 18px;
+  padding: 22px 20px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  min-height: 64px;
+}
+.result .big { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.01em; }
+.result .totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 14px;
+  color: var(--label2);
+  font-size: .95rem;
+}
+#cv-result {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  color: var(--label);
+  font-size: 1.05rem;
+}
+#cv-result span, .totals span { white-space: nowrap; }
+.result .error { color: var(--danger); font-weight: 600; }
+
+@media (max-width: 560px) {
+  .app { padding: 20px 14px 44px; }
+  .title { font-size: 1.7rem; }
+  .tab { flex-direction: column; gap: 4px; font-size: .76rem; padding: 7px 4px; }
+
+  /* Numi empilé (sinon résultats coupés faute de largeur) */
+  .numi { grid-template-columns: 1fr; }
+  #nm-input { min-height: 150px; }
+  #nm-out {
+    border-left: 0;
+    border-top: 1px solid var(--separator);
+    white-space: pre-wrap;
+    min-height: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}

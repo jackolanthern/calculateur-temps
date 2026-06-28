@@ -1,0 +1,9 @@
+node_modules/
+test-results/
+playwright-report/
+.DS_Store
+
+# Notes de dev internes (vault) — pas dans le repo public
+AGENTS.md
+log.md
+docs/

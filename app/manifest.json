@@ -1,0 +1,11 @@
+{
+  "name": "Calculateur de temps",
+  "short_name": "Temps",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F2F2F7",
+  "theme_color": "#F2F2F7",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
