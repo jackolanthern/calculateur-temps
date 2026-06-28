@@ -67,6 +67,33 @@ test('pas de débordement horizontal sur les durées', async ({ page }) => {
   expect(overflows).toBe(false);
 });
 
+test('persistance + permalien : la saisie survit au rechargement', async ({ page }) => {
+  await page.locator('#nm-input').fill('2h + 2h');
+  await expect.poll(() => page.evaluate(() => location.hash)).not.toBe(''); // hash mis à jour
+  await page.reload();
+  await expect(page.locator('#nm-input')).toHaveValue('2h + 2h');
+});
+
+test('copie au clic : une ligne de résultat -> toast', async ({ page }) => {
+  await page.locator('#nm-out .rline[data-copy]').first().click();
+  await expect(page.locator('#toast')).toHaveText('Copié');
+});
+
+test('bouton de partage : copie le lien', async ({ page }) => {
+  await page.getByRole('button', { name: 'Copier le lien' }).click();
+  await expect(page.locator('#toast')).toHaveText('Lien copié');
+});
+
+test('thème : Auto -> Clair -> Sombre', async ({ page }) => {
+  const btn = page.locator('#theme-btn');
+  await expect(btn).toHaveText('Auto');
+  await btn.click();
+  await expect(btn).toHaveText('Clair');
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await btn.click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+});
+
 test.describe('mobile 390px', () => {
   test.use({ viewport: { width: 390, height: 844 } });
 

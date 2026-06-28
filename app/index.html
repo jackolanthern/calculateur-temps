@@ -11,7 +11,10 @@
 </head>
 <body>
   <main class="app">
-    <h1 class="title">Calculateur de temps</h1>
+    <div class="topbar">
+      <h1 class="title">Calculateur de temps</h1>
+      <button id="theme-btn" class="icon-btn" aria-label="Changer le thème">Auto</button>
+    </div>
 
     <div class="modes" role="tablist" aria-label="Mode de saisie">
       <span class="seg-indicator" aria-hidden="true"></span>
@@ -26,7 +29,8 @@
           placeholder="1/1/2000 - 1/6/1990&#10;1h -> s&#10;1h + 30min&#10;3h / 30min"></textarea>
         <pre id="nm-out" aria-live="polite"></pre>
       </div>
-      <p class="note">Une ligne = un calcul. Dates en <b>j/m/a</b>. Unités : s, min, h, j, sem, mois, an. Convertir : <code>-&gt;</code>, <code>=</code> ou <code>in</code> (ex. <code>1h -&gt; min</code>). Dates : <code>date - date</code>, <code>date + 1mois</code>, <code>today</code>, <code>tomorrow</code>, <code>hier</code>.</p>
+      <p class="note">Une ligne = un calcul. Dates en <b>j/m/a</b>. Unités : s, min, h, j, sem, mois, an. Convertir : <code>-&gt;</code>, <code>=</code> ou <code>in</code> (ex. <code>1h -&gt; min</code>). Dates : <code>date - date</code>, <code>date + 1mois</code>, <code>today</code>, <code>tomorrow</code>, <code>hier</code>. Clique un résultat pour le copier.</p>
+      <div class="numi-bar"><button id="share-btn" class="link-btn">Copier le lien</button></div>
     </section>
 
     <!-- Mode Formulaire (onglets) -->
@@ -119,6 +123,8 @@
     </section>
     </section><!-- /#form -->
   </main>
+
+  <div id="toast" role="status" aria-live="polite"></div>
 
   <script src="time.js"></script>
   <script src="parse.js"></script>

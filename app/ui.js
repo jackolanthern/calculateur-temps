@@ -85,20 +85,43 @@ $$('.mode').forEach((btn, i) => {
 
 // --- Mode Expression (Numi) ---
 const nmInput = $('#nm-input'), nmOut = $('#nm-out');
+const DEFAULT_NUMI = '1/1/2000 - 1/6/1990\n1h -> s\n1h + 30min\n3h / 30min';
+
 function renderNumi() {
-  nmOut.textContent = nmInput.value.split('\n').map((line) => {
-    if (!line.trim()) return '';
+  const lines = nmInput.value.split('\n').map((line) => {
+    const div = document.createElement('div');
+    div.className = 'rline';
+    if (!line.trim()) { div.textContent = ' '; return div; } // garde la hauteur de ligne
     try {
       const r = Numi.evaluate(line);
-      return r ? '= ' + formatResult(r) : '';
+      if (r) {
+        const txt = formatResult(r);
+        div.textContent = '= ' + txt;
+        div.dataset.copy = txt; // cliquable -> copie
+        div.title = 'Cliquer pour copier';
+      } else div.textContent = ' ';
     } catch (e) {
-      return '! ' + e.message;
+      div.textContent = '! ' + e.message;
+      div.classList.add('rerr');
     }
-  }).join('\n');
+    return div;
+  });
+  nmOut.replaceChildren(...lines);
 }
-nmInput.addEventListener('input', renderNumi);
-// Pré-remplit avec des exemples pour que le résultat soit affiché d'emblée.
-nmInput.value = '1/1/2000 - 1/6/1990\n1h -> s\n1h + 30min\n3h / 30min';
+nmInput.addEventListener('input', () => { renderNumi(); persist(); });
+
+// 2+3) Persistance (localStorage) + permalien (#hash). Priorité au chargement : hash > localStorage > défaut.
+function persist() {
+  const v = nmInput.value;
+  try { localStorage.setItem('numi', v); } catch (e) { /* mode privé */ }
+  history.replaceState(null, '', v ? '#' + encodeURIComponent(v) : location.pathname + location.search);
+}
+function loadInitial() {
+  let v = '';
+  if (location.hash.length > 1) { try { v = decodeURIComponent(location.hash.slice(1)); } catch (e) {} }
+  if (!v) { try { v = localStorage.getItem('numi') || ''; } catch (e) {} }
+  nmInput.value = v || DEFAULT_NUMI;
+}
 
 // --- Onglets ---
 const tabsBar = $('.tabs');
@@ -131,13 +154,12 @@ function renderEcart() {
     d.seconds && d.seconds + ' s',
   ].filter(Boolean).join(', ') || '0 s';
 
+  const tot4 = (val, label) => `<span data-copy="${nf.format(val)} ${label}">= ${nf.format(val)} ${label}</span>`;
   out.innerHTML =
-    `<div class="big">${cal}${sens}</div>` +
+    `<div class="big" data-copy="${cal}">${cal}${sens}</div>` +
     `<div class="totals">` +
-    `<span>= ${nf.format(tot.days)} jours</span>` +
-    `<span>= ${nf.format(tot.hours)} heures</span>` +
-    `<span>= ${nf.format(tot.minutes)} minutes</span>` +
-    `<span>= ${nf.format(tot.seconds)} secondes</span>` +
+    tot4(tot.days, 'jours') + tot4(tot.hours, 'heures') +
+    tot4(tot.minutes, 'minutes') + tot4(tot.seconds, 'secondes') +
     `</div>`;
 }
 $('#ec-start').addEventListener('input', renderEcart);
@@ -152,7 +174,7 @@ function renderConversion() {
   const all = Time.fromSeconds(Time.toSeconds(v, unit));
   out.innerHTML = Object.keys(all)
     .filter((u) => u !== unit)
-    .map((u) => `<span>${nf.format(all[u])} ${UNIT_LABELS[u]}</span>`)
+    .map((u) => { const t = `${nf.format(all[u])} ${UNIT_LABELS[u]}`; return `<span data-copy="${t}">${t}</span>`; })
     .join('');
 }
 $('#cv-value').addEventListener('input', renderConversion);
@@ -191,12 +213,51 @@ function renderArith() {
     out.innerHTML = `<div class="error">${err.message}</div>`;
   }
 }
-function show(out, text) { out.innerHTML = `<div class="big">${text}</div>`; }
+function show(out, text) { out.innerHTML = `<div class="big" data-copy="${text}">${text}</div>`; }
 
 $('#arith').addEventListener('input', renderArith);
 $('#ar-op').addEventListener('change', renderArith);
 
+// 1) Copie au clic (toute la page : lignes Numi + résultats du formulaire via [data-copy]).
+const toast = $('#toast');
+let toastTimer;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+}
+function copyText(text, okMsg) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => showToast(okMsg || 'Copié'), () => showToast('Copie impossible'));
+  } else showToast('Copie impossible');
+}
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-copy]');
+  if (t) copyText(t.dataset.copy);
+});
+$('#share-btn').addEventListener('click', () => { persist(); copyText(location.href, 'Lien copié'); });
+
+// 4) Thème manuel : Auto (suit l'OS) -> Clair -> Sombre, mémorisé.
+const THEMES = ['auto', 'light', 'dark'];
+const THEME_LABELS = { auto: 'Auto', light: 'Clair', dark: 'Sombre' };
+const themeBtn = $('#theme-btn');
+function applyTheme(t) {
+  if (t === 'auto') delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = t;
+  themeBtn.textContent = THEME_LABELS[t];
+}
+let theme = 'auto';
+try { theme = localStorage.getItem('theme') || 'auto'; } catch (e) {}
+applyTheme(theme);
+themeBtn.addEventListener('click', () => {
+  theme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+  try { localStorage.setItem('theme', theme); } catch (e) {}
+  applyTheme(theme);
+});
+
 // --- Init ---
+loadInitial();
 renderNumi();
 renderConversion();
 renderArith();
