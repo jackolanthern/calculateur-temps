@@ -1,0 +1,12 @@
+{
+  "name": "calculateur-temps",
+  "private": true,
+  "description": "Outils de dev/test. L'app dans app/ reste zéro-dépendance.",
+  "scripts": {
+    "test:unit": "node app/time.test.js && node app/parse.test.js",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1"
+  }
+}
