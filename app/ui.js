@@ -88,22 +88,16 @@ const nmInput = $('#nm-input'), nmOut = $('#nm-out');
 const DEFAULT_NUMI = '1/1/2000 - 1/6/1990\n1h -> s\n1h + 30min\n3h / 30min';
 
 function renderNumi() {
-  const lines = nmInput.value.split('\n').map((line) => {
+  // evaluateAll : contexte partage entre lignes (variables, prev, total).
+  const lines = Numi.evaluateAll(nmInput.value).map((res) => {
     const div = document.createElement('div');
     div.className = 'rline';
-    if (!line.trim()) { div.textContent = ' '; return div; } // garde la hauteur de ligne
-    try {
-      const r = Numi.evaluate(line);
-      if (r) {
-        const txt = formatResult(r);
-        div.textContent = '= ' + txt;
-        div.dataset.copy = txt; // cliquable -> copie
-        div.title = 'Cliquer pour copier';
-      } else div.textContent = ' ';
-    } catch (e) {
-      div.textContent = '! ' + e.message;
-      div.classList.add('rerr');
-    }
+    if (res.error !== undefined) { div.textContent = '! ' + res.error; div.classList.add('rerr'); return div; }
+    if (res.result == null) { div.textContent = ' '; return div; }
+    const txt = formatResult(res.result);
+    div.textContent = (res.assignedTo ? res.assignedTo + ' = ' : '= ') + txt;
+    div.dataset.copy = txt;
+    div.title = 'Cliquer pour copier';
     return div;
   });
   nmOut.replaceChildren(...lines);

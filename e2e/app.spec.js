@@ -67,6 +67,18 @@ test('pas de débordement horizontal sur les durées', async ({ page }) => {
   expect(overflows).toBe(false);
 });
 
+test('variables & références (Numi)', async ({ page }) => {
+  await page.locator('#nm-input').fill('x = 2h\nx + 30min');
+  const out = page.locator('#nm-out');
+  await expect(out).toContainText('x = 2 h');      // ligne d'affectation
+  await expect(out).toContainText('2 h 30 min');   // x réutilisé
+});
+
+test('parenthèses (Numi)', async ({ page }) => {
+  await page.locator('#nm-input').fill('(1h + 30min) * 2');
+  await expect(page.locator('#nm-out')).toContainText('3 h');
+});
+
 test('persistance + permalien : la saisie survit au rechargement', async ({ page }) => {
   await page.locator('#nm-input').fill('2h + 2h');
   await expect.poll(() => page.evaluate(() => location.hash)).not.toBe(''); // hash mis à jour

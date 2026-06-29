@@ -1,5 +1,5 @@
 // Service worker minimal : cache l'app shell pour l'offline. Cache-first.
-const CACHE = 'temps-v11';
+const CACHE = 'temps-v12';
 const ASSETS = ['.', 'index.html', 'style.css', 'time.js', 'parse.js', 'ui.js', 'manifest.json', 'icons/icon.svg'];
 
 self.addEventListener('install', (e) => {

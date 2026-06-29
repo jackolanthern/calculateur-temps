@@ -128,4 +128,37 @@ check('ligne vide => null', () => {
   assert.strictEqual(N.evaluate('   '), null);
 });
 
+// --- Phase 2 : parenthèses ---
+check('parenthèses changent la précédence : (1h + 30min) * 2 = 3h', () => {
+  assert.strictEqual(N.evaluate('(1h + 30min) * 2').seconds, 10800);
+});
+check('parenthèse non fermée lève', () => {
+  assert.throws(() => N.evaluate('(1h + 30min'));
+});
+
+// --- Phase 2 : variables & références (evaluateAll) ---
+check('variable : x = 2h puis x + 30min', () => {
+  const r = N.evaluateAll('x = 2h\nx + 30min');
+  assert.strictEqual(r[0].assignedTo, 'x');
+  assert.strictEqual(r[0].result.seconds, 7200);
+  assert.strictEqual(r[1].result.seconds, 9000);
+});
+check('prev = résultat de la ligne précédente', () => {
+  const r = N.evaluateAll('1h\nprev + 1h');
+  assert.strictEqual(r[1].result.seconds, 7200);
+});
+check('total = somme des durées au-dessus', () => {
+  const r = N.evaluateAll('1h\n2h\ntotal');
+  assert.strictEqual(r[2].result.seconds, 10800);
+});
+check('variable inconnue => erreur sur la ligne', () => {
+  const r = N.evaluateAll('y + 1h');
+  assert.ok(r[0].error && /y/i.test(r[0].error));
+});
+check('evaluateAll : ligne vide => result null', () => {
+  const r = N.evaluateAll('\n1h');
+  assert.strictEqual(r[0].result, null);
+  assert.strictEqual(r[1].result.seconds, 3600);
+});
+
 console.log(`\n${passed} tests OK`);

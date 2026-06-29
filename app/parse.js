@@ -46,6 +46,7 @@
     while (i < input.length) {
       const c = input[i];
       if (c === ' ' || c === '\t') { i++; continue; }
+      if (c === '(' || c === ')') { toks.push({ t: 'paren', v: c }); i++; continue; }
       if ('+-*/'.indexOf(c) !== -1) { toks.push({ t: 'op', v: c }); i++; continue; }
       if (isDigit(c)) {
         const rest = input.slice(i);
@@ -68,11 +69,11 @@
         i += nm[0].length;
         continue;
       }
-      if (/[a-zA-Zéèàâ']/.test(c)) { // mot-clé : today / yesterday / tomorrow (et variantes fr)
-        const wm = input.slice(i).match(/^[a-zA-Zéèàâ']+/);
+      if (/[a-zA-Zéèàâ'_]/.test(c)) { // mot : date relative (today…) sinon identifiant (variable, prev, total)
+        const wm = input.slice(i).match(/^[a-zA-Zéèàâ'_][a-zA-Z0-9éèàâ'_]*/);
         const kd = keywordDate(wm[0].toLowerCase());
-        if (!kd) throw new Error('Mot inconnu : ' + wm[0]);
-        toks.push({ t: 'date', v: kd });
+        if (kd) toks.push({ t: 'date', v: kd });
+        else toks.push({ t: 'id', v: wm[0] }); // résolu à l'évaluation (variable / prev / total)
         i += wm[0].length;
         continue;
       }
@@ -124,13 +125,34 @@
   const num = (value) => ({ type: 'number', value });
   const dateOf = (d) => ({ type: 'date', ms: d.getTime(), date: d });
 
-  function parse(toks) {
+  // Résout un identifiant : variable utilisateur, sinon « prev » / « total »/« sum ».
+  function resolveId(name, ctx) {
+    if (ctx.vars && Object.prototype.hasOwnProperty.call(ctx.vars, name)) return ctx.vars[name];
+    const k = name.toLowerCase();
+    if (k === 'prev') {
+      if (ctx.prev == null) throw new Error('« prev » : aucune ligne précédente');
+      return ctx.prev;
+    }
+    if (k === 'total' || k === 'sum') return dur(ctx.total || 0, { months: 0, days: 0, secs: ctx.total || 0 });
+    throw new Error('Inconnu : ' + name);
+  }
+
+  function parse(toks, ctx) {
+    ctx = ctx || {};
     let p = 0;
     const peek = () => toks[p];
 
     function factor() {
       const tk = peek();
       if (!tk) throw new Error('Expression incomplète');
+      if (tk.t === 'paren' && tk.v === '(') {
+        p++;
+        const e = expr();
+        if (!peek() || peek().t !== 'paren' || peek().v !== ')') throw new Error('Parenthèse fermante manquante');
+        p++;
+        return e;
+      }
+      if (tk.t === 'id') { p++; return resolveId(tk.v, ctx); }
       if (tk.t === 'date') { p++; return { type: 'date', ms: tk.v.getTime(), date: tk.v }; }
       if (tk.t === 'num') { p++; return num(tk.v); }
       if (tk.t === 'dur') {
@@ -166,7 +188,7 @@
     return r;
   }
 
-  function evaluate(line) {
+  function evaluate(line, ctx) {
     let s = String(line).trim();
     if (!s) return null;
     let target = null;
@@ -177,7 +199,7 @@
     }
     s = s.replace(/(->|=)\s*$/, '').trim(); // tolère un -> ou = en suspens
     if (!s) return null;
-    const r = parse(tokenize(s));
+    const r = parse(tokenize(s), ctx);
     if (target) {
       if (r.type !== 'duration') throw new Error('Conversion possible seulement sur une durée');
       r.target = target;
@@ -185,7 +207,40 @@
     return r;
   }
 
-  const Numi = { evaluate, tokenize };
+  // Nom réservé (unité, mot-clé date, ou built-in) : interdit comme nom de variable.
+  function isReserved(name) {
+    const k = name.toLowerCase();
+    return !!canon(k) || !!keywordDate(k) || k === 'prev' || k === 'total' || k === 'sum' || k === 'to' || k === 'in';
+  }
+
+  // Évalue un document multi-lignes avec contexte : variables (x = …), « prev », « total » (somme des durées).
+  function evaluateAll(text) {
+    const ctx = { vars: {}, prev: null, total: 0 };
+    const track = (val) => {
+      if (!val) return;
+      ctx.prev = val;
+      if (val.type === 'duration') ctx.total += val.seconds;
+    };
+    return String(text).split('\n').map((line) => {
+      if (!line.trim()) return { result: null };
+      try {
+        const m = line.match(/^\s*([A-Za-z_éèàâ][A-Za-z0-9_éèàâ]*)\s*=\s*(.+)$/);
+        if (m && !isReserved(m[1])) { // affectation : x = expr
+          const val = evaluate(m[2], ctx);
+          ctx.vars[m[1]] = val;
+          track(val);
+          return { result: val, assignedTo: m[1] };
+        }
+        const val = evaluate(line, ctx);
+        track(val);
+        return { result: val };
+      } catch (e) {
+        return { error: e.message };
+      }
+    });
+  }
+
+  const Numi = { evaluate, evaluateAll, tokenize };
   if (typeof module !== 'undefined' && module.exports) module.exports = Numi;
   else root.Numi = Numi;
 })(typeof self !== 'undefined' ? self : this);
