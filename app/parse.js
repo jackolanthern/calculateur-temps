@@ -149,15 +149,14 @@
   const dur = (seconds, cal) => ({ type: 'duration', seconds, cal: cal || { months: 0, days: 0, secs: seconds } });
   const num = (value) => ({ type: 'number', value });
   const dateOf = (d) => ({ type: 'date', ms: d.getTime(), date: d });
-  const text = (t) => ({ type: 'text', text: t });
 
   // Fonctions appelables : weekday(date), joursouvres(d1,d2), ajoutouvres(date,n) (+ alias en).
-  const WEEKDAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  // weekday renvoie l'index du jour (0=dim) ; le nom localisé est rendu côté UI.
   const asDate = (v, fn) => { if (!v || v.type !== 'date') throw new Error(fn + ' attend une date'); return v.date; };
   const asNum = (v, fn) => { if (!v || v.type !== 'number') throw new Error(fn + ' attend un nombre'); return v.value; };
   const FUNCS = {
-    weekday: (a) => text(WEEKDAYS[asDate(a[0], 'weekday').getDay()]),
-    jour: (a) => text(WEEKDAYS[asDate(a[0], 'jour').getDay()]),
+    weekday: (a) => ({ type: 'weekday', day: asDate(a[0], 'weekday').getDay() }),
+    jour: (a) => ({ type: 'weekday', day: asDate(a[0], 'jour').getDay() }),
     joursouvres: (a) => num(Time.businessDaysBetween(asDate(a[0], 'joursouvres'), asDate(a[1], 'joursouvres'))),
     businessdays: (a) => num(Time.businessDaysBetween(asDate(a[0], 'businessdays'), asDate(a[1], 'businessdays'))),
     ajoutouvres: (a) => dateOf(Time.addBusinessDays(asDate(a[0], 'ajoutouvres'), asNum(a[1], 'ajoutouvres'))),

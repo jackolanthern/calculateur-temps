@@ -12,14 +12,17 @@
 <body>
   <main class="app">
     <div class="topbar">
-      <h1 class="title">Calculateur de temps</h1>
-      <button id="theme-btn" class="icon-btn" aria-label="Changer le thème">Auto</button>
+      <h1 class="title" data-i18n="title">Calculateur de temps</h1>
+      <div class="topbar-btns">
+        <button id="lang-btn" class="icon-btn" data-i18n-aria="aria_lang" aria-label="Langue">FR</button>
+        <button id="theme-btn" class="icon-btn" data-i18n-aria="aria_theme" aria-label="Changer le thème">Auto</button>
+      </div>
     </div>
 
-    <div class="modes" role="tablist" aria-label="Mode de saisie">
+    <div class="modes" role="tablist" data-i18n-aria="aria_mode" aria-label="Mode de saisie">
       <span class="seg-indicator" aria-hidden="true"></span>
-      <button class="mode" data-mode="numi" aria-selected="true">Expression</button>
-      <button class="mode" data-mode="form" aria-selected="false">Formulaire</button>
+      <button class="mode" data-mode="numi" aria-selected="true" data-i18n="mode_expr">Expression</button>
+      <button class="mode" data-mode="form" aria-selected="false" data-i18n="mode_form">Formulaire</button>
     </div>
 
     <!-- Mode Expression (style Numi) : une ligne = un calcul, résultat en direct -->
@@ -29,8 +32,8 @@
           placeholder="1/1/2000 - 1/6/1990&#10;1h -> s&#10;1h + 30min&#10;3h / 30min"></textarea>
         <pre id="nm-out" aria-live="polite"></pre>
       </div>
-      <p class="note">Une ligne = un calcul. Dates en <b>j/m/a</b>. Unités : s, min, h, j, sem, mois, an. Convertir : <code>-&gt;</code>, <code>=</code> ou <code>in</code> (ex. <code>1h -&gt; min</code>). Dates : <code>date - date</code>, <code>date + 1mois</code>, <code>today</code>, <code>tomorrow</code>, <code>hier</code>. Parenthèses OK. Variables : <code>x = 2h</code> puis <code>x</code> ; références <code>prev</code>, <code>total</code>. Formats date : <code>2026-06-29</code>, <code>15 jan 2026</code>. Fonctions : <code>weekday(date)</code>, <code>joursouvres(d1, d2)</code>, <code>ajoutouvres(date, n)</code>. Clique un résultat pour le copier.</p>
-      <div class="numi-bar"><button id="share-btn" class="link-btn">Copier le lien</button></div>
+      <p class="note" data-i18n-html="note_numi"></p>
+      <div class="numi-bar"><button id="share-btn" class="link-btn" data-i18n="share">Copier le lien</button></div>
     </section>
 
     <!-- Mode Formulaire (onglets) -->
@@ -39,25 +42,25 @@
       <span class="seg-indicator" aria-hidden="true"></span>
       <button class="tab" role="tab" aria-selected="true" data-tab="ecart">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-        Écart
+        <span data-i18n="tab_ecart">Écart</span>
       </button>
       <button class="tab" role="tab" aria-selected="false" data-tab="conversion">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h14l-4-4M21 16H7l4 4"/></svg>
-        Conversion
+        <span data-i18n="tab_conv">Conversion</span>
       </button>
       <button class="tab" role="tab" aria-selected="false" data-tab="arith">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 13h2M8 17h2M14 13h2M14 17h2"/></svg>
-        Arithmétique
+        <span data-i18n="tab_arith">Arithmétique</span>
       </button>
     </nav>
 
     <!-- Onglet 1 : écart entre deux dates -->
     <section class="panel" id="ecart" role="tabpanel">
       <div class="card">
-        <label class="field">Début
+        <label class="field"><span data-i18n="f_start">Début</span>
           <input type="datetime-local" id="ec-start">
         </label>
-        <label class="field">Fin
+        <label class="field"><span data-i18n="f_end">Fin</span>
           <input type="datetime-local" id="ec-end">
         </label>
       </div>
@@ -67,55 +70,55 @@
     <!-- Onglet 2 : conversion de durée -->
     <section class="panel" id="conversion" role="tabpanel" hidden>
       <div class="card">
-        <label class="field">Valeur
+        <label class="field"><span data-i18n="f_value">Valeur</span>
           <input type="number" id="cv-value" value="1" step="any" inputmode="decimal">
         </label>
-        <label class="field">Unité
+        <label class="field"><span data-i18n="f_unit">Unité</span>
           <select id="cv-unit">
-            <option value="s">secondes</option>
-            <option value="min">minutes</option>
-            <option value="h" selected>heures</option>
-            <option value="day">jours</option>
-            <option value="week">semaines</option>
-            <option value="month">mois</option>
-            <option value="year">années</option>
+            <option value="s" data-i18n="unit_s">secondes</option>
+            <option value="min" data-i18n="unit_min">minutes</option>
+            <option value="h" selected data-i18n="unit_h">heures</option>
+            <option value="day" data-i18n="unit_day">jours</option>
+            <option value="week" data-i18n="unit_week">semaines</option>
+            <option value="month" data-i18n="unit_month">mois</option>
+            <option value="year" data-i18n="unit_year">années</option>
           </select>
         </label>
       </div>
       <output class="result" id="cv-result" aria-live="polite"></output>
-      <p class="note">Mois et années sont approximatifs ici (mois ≈ 30 j, an ≈ 365 j) : une durée brute n'a pas de calendrier.</p>
+      <p class="note" data-i18n="note_conv">Mois et années sont approximatifs ici (mois ≈ 30 j, an ≈ 365 j) : une durée brute n'a pas de calendrier.</p>
     </section>
 
     <!-- Onglet 3 : arithmétique de durées -->
     <section class="panel" id="arith" role="tabpanel" hidden>
       <div class="card">
         <fieldset class="duration" id="ar-a">
-          <legend>Durée A</legend>
-          <label>j<input type="number" data-u="d" value="1" min="0" step="any" inputmode="numeric"></label>
-          <label>h<input type="number" data-u="h" value="0" min="0" step="any" inputmode="numeric"></label>
-          <label>min<input type="number" data-u="m" value="30" min="0" step="any" inputmode="numeric"></label>
-          <label>s<input type="number" data-u="s" value="0" min="0" step="any" inputmode="numeric"></label>
+          <legend data-i18n="durA">Durée A</legend>
+          <label><span data-i18n="u_d">j</span><input type="number" data-u="d" value="1" min="0" step="any" inputmode="numeric"></label>
+          <label><span data-i18n="u_h">h</span><input type="number" data-u="h" value="0" min="0" step="any" inputmode="numeric"></label>
+          <label><span data-i18n="u_min">min</span><input type="number" data-u="m" value="30" min="0" step="any" inputmode="numeric"></label>
+          <label><span data-i18n="u_s">s</span><input type="number" data-u="s" value="0" min="0" step="any" inputmode="numeric"></label>
         </fieldset>
 
-        <label class="field">Opération
+        <label class="field"><span data-i18n="f_op">Opération</span>
           <select id="ar-op">
-            <option value="add">A + B (durée)</option>
-            <option value="sub">A − B (durée)</option>
-            <option value="mul">A × n (nombre)</option>
-            <option value="divn">A ÷ n (nombre)</option>
-            <option value="divd">A ÷ B = ratio (durée)</option>
+            <option value="add" data-i18n="op_add">A + B (durée)</option>
+            <option value="sub" data-i18n="op_sub">A − B (durée)</option>
+            <option value="mul" data-i18n="op_mul">A × n (nombre)</option>
+            <option value="divn" data-i18n="op_divn">A ÷ n (nombre)</option>
+            <option value="divd" data-i18n="op_divd">A ÷ B = ratio (durée)</option>
           </select>
         </label>
 
         <fieldset class="duration" id="ar-b">
-          <legend>Durée B</legend>
-          <label>j<input type="number" data-u="d" value="0" min="0" step="any" inputmode="numeric"></label>
-          <label>h<input type="number" data-u="h" value="1" min="0" step="any" inputmode="numeric"></label>
-          <label>min<input type="number" data-u="m" value="0" min="0" step="any" inputmode="numeric"></label>
-          <label>s<input type="number" data-u="s" value="0" min="0" step="any" inputmode="numeric"></label>
+          <legend data-i18n="durB">Durée B</legend>
+          <label><span data-i18n="u_d">j</span><input type="number" data-u="d" value="0" min="0" step="any" inputmode="numeric"></label>
+          <label><span data-i18n="u_h">h</span><input type="number" data-u="h" value="1" min="0" step="any" inputmode="numeric"></label>
+          <label><span data-i18n="u_min">min</span><input type="number" data-u="m" value="0" min="0" step="any" inputmode="numeric"></label>
+          <label><span data-i18n="u_s">s</span><input type="number" data-u="s" value="0" min="0" step="any" inputmode="numeric"></label>
         </fieldset>
 
-        <label class="field" id="ar-n-field" hidden>Nombre
+        <label class="field" id="ar-n-field" hidden><span data-i18n="f_num">Nombre</span>
           <input type="number" id="ar-n" value="3" step="any" inputmode="decimal">
         </label>
       </div>

@@ -176,10 +176,10 @@ check('date nom de mois complet (français) : 25 décembre 2026', () => {
 });
 
 // --- Phase 3 : fonctions weekday / jours ouvrés ---
-check('weekday(1/1/2024) = lundi', () => {
+check('weekday(1/1/2024) = lundi (day index 1)', () => {
   const r = N.evaluate('weekday(1/1/2024)');
-  assert.strictEqual(r.type, 'text');
-  assert.strictEqual(r.text, 'lundi');
+  assert.strictEqual(r.type, 'weekday');
+  assert.strictEqual(r.day, 1); // 1 jan 2024 = lundi
 });
 check('joursouvres(1/1/2024, 8/1/2024) = 5', () => {
   assert.strictEqual(N.evaluate('joursouvres(1/1/2024, 8/1/2024)').value, 5);

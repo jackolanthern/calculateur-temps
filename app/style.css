@@ -57,6 +57,7 @@ body {
   letter-spacing: -0.02em;
   margin: 0;
 }
+.topbar-btns { display: flex; gap: 8px; flex: none; }
 .icon-btn {
   flex: none;
   min-height: 36px;

@@ -104,6 +104,16 @@ test('bouton de partage : copie le lien', async ({ page }) => {
   await expect(page.locator('#toast')).toHaveText('Lien copié');
 });
 
+test('langue : bascule FR -> EN', async ({ page }) => {
+  const langBtn = page.locator('#lang-btn');
+  await expect(langBtn).toHaveText('FR');
+  await expect(page.locator('.mode[data-mode="form"]')).toHaveText('Formulaire');
+  await langBtn.click();
+  await expect(langBtn).toHaveText('EN');
+  await expect(page.locator('.mode[data-mode="form"]')).toHaveText('Form');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});
+
 test('thème : Auto -> Clair -> Sombre', async ({ page }) => {
   const btn = page.locator('#theme-btn');
   await expect(btn).toHaveText('Auto');
