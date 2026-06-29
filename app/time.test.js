@@ -90,4 +90,20 @@ check('breakdown depuis mois (33 j = 1 mois 3 j, pas d\'années)', () => {
   eq(T.breakdown(33 * 86400, 'month'), { years: 0, months: 1, days: 3, hours: 0, minutes: 0, seconds: 0 });
 });
 
+// --- Jours ouvrés (Phase 3) — 1 jan 2024 = lundi ---
+check('businessDaysBetween lun -> lun+7 = 5', () => {
+  eq(T.businessDaysBetween(new Date(2024, 0, 1), new Date(2024, 0, 8)), 5);
+});
+check('businessDaysBetween ven -> lun = 1', () => {
+  eq(T.businessDaysBetween(new Date(2024, 0, 5), new Date(2024, 0, 8)), 1);
+});
+check('addBusinessDays ven + 1 = lun', () => {
+  const d = T.addBusinessDays(new Date(2024, 0, 5), 1); // 5 jan = vendredi
+  eq([d.getMonth(), d.getDate()], [0, 8]);
+});
+check('addBusinessDays lun + 5 = lundi suivant', () => {
+  const d = T.addBusinessDays(new Date(2024, 0, 1), 5);
+  eq([d.getMonth(), d.getDate()], [0, 8]);
+});
+
 console.log(`\n${passed} tests OK`);

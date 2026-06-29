@@ -161,4 +161,36 @@ check('evaluateAll : ligne vide => result null', () => {
   assert.strictEqual(r[1].result.seconds, 3600);
 });
 
+// --- Phase 3 : formats de date ---
+check('date ISO 2026-06-29', () => {
+  const r = N.evaluate('2026-06-29 - 2026-06-28');
+  assert.strictEqual(r.fromDates, true);
+  assert.strictEqual(r.seconds, 86400);
+});
+check('date nom de mois : 15 jan 2026 - 1 jan 2026 = 14 j', () => {
+  assert.strictEqual(N.evaluate('15 jan 2026 - 1 jan 2026').seconds, 14 * 86400);
+});
+check('date nom de mois complet (français) : 25 décembre 2026', () => {
+  const r = N.evaluate('25 décembre 2026 - 24 décembre 2026');
+  assert.strictEqual(r.seconds, 86400);
+});
+
+// --- Phase 3 : fonctions weekday / jours ouvrés ---
+check('weekday(1/1/2024) = lundi', () => {
+  const r = N.evaluate('weekday(1/1/2024)');
+  assert.strictEqual(r.type, 'text');
+  assert.strictEqual(r.text, 'lundi');
+});
+check('joursouvres(1/1/2024, 8/1/2024) = 5', () => {
+  assert.strictEqual(N.evaluate('joursouvres(1/1/2024, 8/1/2024)').value, 5);
+});
+check('ajoutouvres(5/1/2024, 1) = 8/1/2024 (ven + 1 ouvré = lun)', () => {
+  const r = N.evaluate('ajoutouvres(5/1/2024, 1)');
+  assert.strictEqual(r.type, 'date');
+  assert.strictEqual(r.date.getDate(), 8);
+});
+check('fonction inconnue lève', () => {
+  assert.throws(() => N.evaluate('bidule(1/1/2024)'));
+});
+
 console.log(`\n${passed} tests OK`);

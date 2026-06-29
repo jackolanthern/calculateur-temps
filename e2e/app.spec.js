@@ -67,6 +67,14 @@ test('pas de débordement horizontal sur les durées', async ({ page }) => {
   expect(overflows).toBe(false);
 });
 
+test('Phase 3 : formats de date, weekday, jours ouvrés', async ({ page }) => {
+  await page.locator('#nm-input').fill('weekday(1/1/2024)\njoursouvres(1/1/2024, 8/1/2024)\n2026-06-29 - 2026-06-28');
+  const out = page.locator('#nm-out');
+  await expect(out).toContainText('lundi');   // weekday()
+  await expect(out).toContainText('= 5');      // jours ouvrés
+  await expect(out).toContainText('1 j');      // diff date ISO
+});
+
 test('variables & références (Numi)', async ({ page }) => {
   await page.locator('#nm-input').fill('x = 2h\nx + 30min');
   const out = page.locator('#nm-out');

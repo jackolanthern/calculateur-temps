@@ -82,6 +82,24 @@
     return secA / secB;
   }
 
+  // Jours ouvrés (lundi-vendredi).
+  const isWeekday = (d) => { const g = d.getDay(); return g !== 0 && g !== 6; };
+  function businessDaysBetween(a, b) {
+    const hi = new Date(Math.max(a, b)); hi.setHours(0, 0, 0, 0);
+    const cur = new Date(Math.min(a, b)); cur.setHours(0, 0, 0, 0);
+    let count = 0;
+    cur.setDate(cur.getDate() + 1); // exclut le jour de départ, inclut l'arrivée
+    while (cur <= hi) { if (isWeekday(cur)) count++; cur.setDate(cur.getDate() + 1); }
+    return count;
+  }
+  function addBusinessDays(date, n) {
+    const d = new Date(date.getTime());
+    const step = n >= 0 ? 1 : -1;
+    let rem = Math.abs(n);
+    while (rem > 0) { d.setDate(d.getDate() + step); if (isWeekday(d)) rem--; }
+    return d;
+  }
+
   // Décompose une durée en années/mois/j/h/min/s (approx 365 j/an, 30 j/mois) pour un
   // affichage lisible des conversions. `from` = 'year' (inclut les années) ou 'month'.
   function breakdown(seconds, from) {
@@ -107,6 +125,7 @@
 
   const Time = {
     diffCalendar, diffTotals, toSeconds, fromSeconds, addCalendar, breakdown,
+    businessDaysBetween, addBusinessDays,
     addDurations, subDurations, mulDuration, divDurationByNumber, ratio,
     normalize, UNIT_SECONDS,
   };

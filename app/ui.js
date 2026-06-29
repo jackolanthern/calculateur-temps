@@ -44,6 +44,7 @@ function fmtBreakdown(b) {
 // Met en forme un résultat du parseur (mode Numi).
 function formatResult(r) {
   if (!r) return '';
+  if (r.type === 'text') return r.text;
   if (r.type === 'date') {
     const d = r.date, pad = (n) => String(n).padStart(2, '0');
     let s = d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear();

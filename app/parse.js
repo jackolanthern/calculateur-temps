@@ -31,6 +31,23 @@
   }
   const scaleCal = (c, k) => ({ months: c.months * k, days: c.days * k, secs: c.secs * k });
 
+  // Noms de mois (fr + en, abrégés) -> index 0-11, pour le format « 15 jan 2026 ».
+  const MONTHS = {
+    jan: 0, janv: 0, janvier: 0, january: 0,
+    fev: 1, 'fév': 1, fevr: 1, 'févr': 1, fevrier: 1, 'février': 1, feb: 1, february: 1,
+    mar: 2, mars: 2, march: 2,
+    avr: 3, avril: 3, apr: 3, april: 3,
+    mai: 4, may: 4,
+    juin: 5, jun: 5, june: 5,
+    juil: 6, juillet: 6, jul: 6, july: 6,
+    aout: 7, 'août': 7, aug: 7, august: 7,
+    sep: 8, sept: 8, septembre: 8, september: 8,
+    oct: 9, octobre: 9, october: 9,
+    nov: 10, novembre: 10, november: 10,
+    dec: 11, 'déc': 11, decembre: 11, 'décembre': 11, december: 11,
+  };
+  const monthIdx = (w) => { const k = w.toLowerCase().replace(/\.$/, ''); return k in MONTHS ? MONTHS[k] : null; };
+
   // Mots-clés date relatifs (gardent l'heure courante).
   function keywordDate(w) {
     if (w === 'today' || w === 'aujourdhui' || w === "aujourd'hui") return new Date();
@@ -47,15 +64,23 @@
       const c = input[i];
       if (c === ' ' || c === '\t') { i++; continue; }
       if (c === '(' || c === ')') { toks.push({ t: 'paren', v: c }); i++; continue; }
+      if (c === ',') { toks.push({ t: 'comma' }); i++; continue; } // séparateur d'arguments
       if ('+-*/'.indexOf(c) !== -1) { toks.push({ t: 'op', v: c }); i++; continue; }
       if (isDigit(c)) {
         const rest = input.slice(i);
+        const iso = rest.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); // ISO aaaa-mm-jj
+        if (iso) { toks.push({ t: 'date', v: new Date(+iso[1], +iso[2] - 1, +iso[3]) }); i += iso[0].length; continue; }
         const dm = rest.match(/^(\d{1,4})\/(\d{1,2})\/(\d{1,4})(?:\s+(\d{1,2}):(\d{2}))?/);
         if (dm) {
           const d = new Date(+dm[3], +dm[2] - 1, +dm[1], dm[4] ? +dm[4] : 0, dm[5] ? +dm[5] : 0);
           toks.push({ t: 'date', v: d });
           i += dm[0].length;
           continue;
+        }
+        const mn = rest.match(/^(\d{1,2})\s+([A-Za-zàâéèûôç]+)\.?\s+(\d{4})/); // « 15 jan 2026 »
+        if (mn) {
+          const mi = monthIdx(mn[2]);
+          if (mi !== null) { toks.push({ t: 'date', v: new Date(+mn[3], mi, +mn[1]) }); i += mn[0].length; continue; }
         }
         const nm = rest.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-Zéèàâ]+)?/);
         const num = parseFloat(nm[1].replace(',', '.'));
@@ -124,6 +149,25 @@
   const dur = (seconds, cal) => ({ type: 'duration', seconds, cal: cal || { months: 0, days: 0, secs: seconds } });
   const num = (value) => ({ type: 'number', value });
   const dateOf = (d) => ({ type: 'date', ms: d.getTime(), date: d });
+  const text = (t) => ({ type: 'text', text: t });
+
+  // Fonctions appelables : weekday(date), joursouvres(d1,d2), ajoutouvres(date,n) (+ alias en).
+  const WEEKDAYS = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  const asDate = (v, fn) => { if (!v || v.type !== 'date') throw new Error(fn + ' attend une date'); return v.date; };
+  const asNum = (v, fn) => { if (!v || v.type !== 'number') throw new Error(fn + ' attend un nombre'); return v.value; };
+  const FUNCS = {
+    weekday: (a) => text(WEEKDAYS[asDate(a[0], 'weekday').getDay()]),
+    jour: (a) => text(WEEKDAYS[asDate(a[0], 'jour').getDay()]),
+    joursouvres: (a) => num(Time.businessDaysBetween(asDate(a[0], 'joursouvres'), asDate(a[1], 'joursouvres'))),
+    businessdays: (a) => num(Time.businessDaysBetween(asDate(a[0], 'businessdays'), asDate(a[1], 'businessdays'))),
+    ajoutouvres: (a) => dateOf(Time.addBusinessDays(asDate(a[0], 'ajoutouvres'), asNum(a[1], 'ajoutouvres'))),
+    addbusinessdays: (a) => dateOf(Time.addBusinessDays(asDate(a[0], 'addbusinessdays'), asNum(a[1], 'addbusinessdays'))),
+  };
+  function callFunc(name, args) {
+    const f = FUNCS[name.toLowerCase()];
+    if (!f) throw new Error('Fonction inconnue : ' + name);
+    return f(args);
+  }
 
   // Résout un identifiant : variable utilisateur, sinon « prev » / « total »/« sum ».
   function resolveId(name, ctx) {
@@ -152,7 +196,21 @@
         p++;
         return e;
       }
-      if (tk.t === 'id') { p++; return resolveId(tk.v, ctx); }
+      if (tk.t === 'id') {
+        p++;
+        if (peek() && peek().t === 'paren' && peek().v === '(') { // appel de fonction
+          p++;
+          const args = [];
+          if (!(peek() && peek().t === 'paren' && peek().v === ')')) {
+            args.push(expr());
+            while (peek() && peek().t === 'comma') { p++; args.push(expr()); }
+          }
+          if (!(peek() && peek().t === 'paren' && peek().v === ')')) throw new Error('Parenthèse fermante manquante');
+          p++;
+          return callFunc(tk.v, args);
+        }
+        return resolveId(tk.v, ctx);
+      }
       if (tk.t === 'date') { p++; return { type: 'date', ms: tk.v.getTime(), date: tk.v }; }
       if (tk.t === 'num') { p++; return num(tk.v); }
       if (tk.t === 'dur') {
